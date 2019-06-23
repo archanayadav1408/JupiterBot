@@ -1,41 +1,39 @@
 const express = require('express');
 const app = express();
-const apiai = require('apiai')('db29e26a4e9546f39f2bbc519db59553');
+var APIAI_TOKEN = "034525bb6aaa490f9438dadd7abe1967";
+const apiai = require('apiai')(APIAI_TOKEN);
+const APIAI_SESSION_ID = "1";
 
-app.use(express.static(__dirname + '/views')); //html
-app.use(express.static(__dirname + '/public')); //css,js,images
-const server = app.listen(process.env.PORT||5000,function()
-{
-  console.log("Server started ");
-});
-app.get('/',(req,res) => {
+app.use(express.static(__dirname+'/views')); 
+app.use(express.static(__dirname+ '/public'));
 
- alert("deb");
-  res.sendFile( 'index.html',{ root: 'views' });
+const server = app.listen(process.env.PORT || 5000, function()  {
+  console.log('yess');
 });
+
 const io = require('socket.io')(server);
+
+app.get('/', function(req,res){
+res.sendFile("index.html");
+});
+
 io.on('connection', function(socket) {
-  socket.on('chat message', (text) => {
-    console.log('Message: ' + text);
-
-
-    // Get a reply from API.AI
-console.log("Get a reply from API.AI");
+	console.log('user connected');
+ socket.on('chat message', (text) => {
+   console.log('Message: ' + text);
     let apiaiReq = apiai.textRequest(text, {
-      sessionId: 5
+      sessionId: APIAI_SESSION_ID
     });
-
     apiaiReq.on('response', (response) => {
       let aiText = response.result.fulfillment.speech;
-    console.log('Bot reply: ' + aiText);
-      socket.emit('bot reply', aiText); // Send the result back to the browser!
+      console.log("Reply: "  + aiText);
+      socket.emit('bot reply', aiText); 
     });
-
     apiaiReq.on('error', (error) => {
       console.log(error);
     });
 
     apiaiReq.end();
 
-  });
+ });
 });
